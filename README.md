@@ -4,70 +4,89 @@ A beautiful, feature-rich dice roller built for Settlers of Catan. Runs entirely
 
 **[Live Demo](https://gowtham3105.github.io/catan-dice/)**
 
+## How It Works
+
+### 1. Set Up Players
+When you first open the app (or tap **New Game**), the **"Who Goes First?"** screen appears. Here you can:
+- Edit player names by tapping the text fields
+- Tap the color circles to cycle through 6 Catan player colors (red, blue, orange, white, green, brown)
+- Adjust player count (2-6) via the Players panel
+
+### 2. Pick First Player
+Tap **"Pick First Player"** — the app automatically rolls for every player with staggered dice animations. The highest total wins and goes first. Ties are automatically re-rolled until a clear winner emerges. The player order is reordered so the winner starts.
+
+### 3. Roll Dice
+Tap **Roll Dice**, press Space/Enter, tap the dice directly, or shake your phone. The 3D dice animate, land on a result, and the turn automatically advances to the next player.
+
+### 4. Special Rolls
+- **Robber (7)** — a full-screen overlay appears with a pulsing pirate flag. Dismiss it to continue.
+- **Snake Eyes (2)** — dice glow red with a sad descending chord
+- **Boxcars (12)** — rainbow cycling glow with a triumphant fanfare
+- **Doubles** — green highlight with a sparkle chime
+
+### 5. Track the Game
+- The **header** shows roll count, average, rolls since last robber, and total game time
+- The **turn bar** shows who's rolling, a live turn timer, and who's up next
+- **Roll history** displays the last 10 rolls as chips with mini dice faces and player colors
+- The **Catan probability reference strip** highlights the current roll against expected pip counts
+
+### 6. Review Stats
+Expand **Session Statistics** to see:
+- Total rolls, average, highest, lowest
+- Robber count vs expected, doubles, boxcars
+- Frequency distribution chart (actual vs expected)
+- Per-player time stats: turns taken, total time, average time, longest turn
+- Slowest player highlighted in red, fastest in green
+
+### 7. New Game
+Tap **New Game** at the bottom to reset everything. A styled confirmation modal appears. Stats, history, and timers are cleared, but your player setup is preserved. The first-roll selection starts again.
+
 ## Features
 
-### Dice Rolling
-- **3D animated dice** with CSS `transform-style: preserve-3d` and multiple roll animations
-- **Cryptographic RNG** using `crypto.getRandomValues()` mixed with high-resolution timing for fair rolls
-- **Particle effects** — color-coded bursts on every roll (orange for robber, rainbow for boxcars, red for snake eyes)
-- **Animated starfield** background with aurora gradient
-
-### Special Roll Detection
-- **Robber (7)** — dramatic full-screen overlay with pulsing pirate flag, shows rolls since last robber
-- **Snake Eyes (2)** — red glow, descending minor chord
-- **Boxcars (12)** — rainbow cycling glow, triumphant fanfare with confetti burst
-- **Doubles** — cyan highlight with sparkle chime
+### Dice & Animation
+- **3D CSS dice** with `transform-style: preserve-3d` and 4 roll animation variants
+- **Cryptographic RNG** using `crypto.getRandomValues()` mixed with high-resolution timing
+- **Particle effects** — earth-toned bursts on every roll, dark for robber, rainbow for boxcars
+- **Ocean wave** animated background with aurora gradients
 
 ### Sound Engine
-- Fully synthesized audio using the Web Audio API — no sound files needed
-- **Unique musical motif for each roll total** (2-12), reflecting Catan probability:
-  - High-probability numbers (6, 8) get bright major arpeggios
-  - Low-probability numbers (3, 11) get single tones
-  - Robber (7) plays an ominous tritone with deep rumble
-  - Boxcars (12) triggers a triumphant C major fanfare
-- Dice clatter sound on roll start (bandpass-filtered noise bursts)
+- Fully synthesized audio using the Web Audio API — no sound files
+- **Unique musical motif per roll total** (2-12):
+  - High-probability numbers (6, 8) — bright major arpeggios
+  - Low-probability numbers (3, 11) — single tones
+  - Robber (7) — ominous tritone with deep rumble
+  - Boxcars (12) — triumphant C major fanfare
+- Dice clatter on roll start (bandpass-filtered noise bursts)
 - Toggle on/off with the speaker button
 
-### Multiplayer Turn Tracking
-- **2-6 players** with customizable names and 6 color options (red, blue, orange, white, green, brown)
-- Color-coded turn bar showing current roller and who's up next
-- Player colors appear as dots in the roll history
-- Turn automatically advances after each roll
-
-### Statistics & Probability
-- **Header stats** — roll count, running average, rolls since last 7 (highlights orange when overdue at 7+)
-- **Catan probability reference strip** — shows pip dots for each number (2-12) matching the board tile dots, highlights the current roll
-- **Session statistics panel** — total rolls, average, high/low, robber count, expected robbers, doubles, boxcars
-- **Frequency distribution chart** — actual rolls vs expected probability (ghost bars), color-coded by number
-
-### Roll History
-- Last 10 rolls shown as chips with mini dice faces, player color dots, and totals
-- Special styling for robber (orange) and boxcars (purple) rolls
+### Game Timer
+- **Total game time** in the header, ticking live
+- **Per-turn timer** in the turn bar — turns gold at 30s, pulses red at 60s
+- **Per-player time stats** in the stats panel with slowest/fastest highlights
 
 ### Controls
 - **Roll button** with ripple animation
-- **Keyboard** — Space or Enter to roll, Escape to dismiss robber overlay
-- **Mobile shake** — uses `DeviceMotionEvent` to detect phone shaking (threshold > 30)
-- **Click dice** directly to roll
+- **Keyboard** — Space or Enter to roll, Escape to dismiss robber
+- **Mobile shake** — `DeviceMotionEvent` with threshold > 30
+- **Tap dice** directly to roll
 
-### Persistence
-- Full session state saved to `localStorage` — refresh the page and pick up where you left off
-- Saves: roll stats, distribution, history, player setup, and current turn
+### Persistence & PWA
+- Full session state saved to `localStorage` — refresh and pick up where you left off
+- **Installable as a PWA** — add to home screen on iOS/Android, works offline
+- Saves: roll stats, distribution, history, player setup, timers, and current turn
 
 ### Design
-- Dark theme with glassmorphism-style surfaces
-- Animated aurora background with drifting starfield
-- Fully responsive — adapts dice size and layout for screens under 480px
-- Single `index.html` file (~1200 lines), zero external dependencies
+- **Catan-themed** color palette: ocean blue background, parchment surfaces, warm gold accents
+- Ivory dice with dark red dots matching real Catan dice
+- Catan red roll button, earth-toned particles and charts
+- Fully responsive — adapts for screens under 480px (iPhone 12 Pro tested)
+- Single `index.html` file, zero external dependencies
 
-## Usage
+## Install
 
 Open `index.html` in any modern browser, or visit the [live demo](https://gowtham3105.github.io/catan-dice/).
 
-1. Tap **Roll Dice** (or press Space/Enter, or shake your phone)
-2. Set up players via the **Players** panel — customize names and colors
-3. Expand **Session Statistics** to see distribution charts and detailed stats
-4. Robber overlay auto-dismisses on click/tap or press Escape
+**As a phone app:** Visit the live demo in Safari (iOS) or Chrome (Android), then add to home screen. It works offline and opens fullscreen.
 
 ## License
 
