@@ -333,6 +333,9 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   background:linear-gradient(135deg,#d4a017,#f5e6c8);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .fr-sub{font-size:.82rem;color:var(--muted);letter-spacing:.08em;text-align:center}
+.fr-count-row{display:flex;align-items:center;gap:12px;justify-content:center}
+.fr-count-val{font-size:1.5rem;font-weight:800;min-width:28px;text-align:center}
+.fr-count-lbl{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .fr-players{display:flex;flex-direction:column;gap:8px;width:85%;max-width:340px;margin:4px 0}
 .fr-player{display:flex;align-items:center;gap:12px;padding:8px 14px;
   background:rgba(245,230,200,.05);border:1px solid rgba(245,230,200,.1);
@@ -599,6 +602,12 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
 <div id="firstRoll">
   <div class="fr-title">🎲 Who Goes First?</div>
   <div class="fr-sub">Each player rolls once — highest total starts!</div>
+  <div class="fr-count-row">
+    <button class="pcount-btn" onclick="frAdjustCount(-1)">−</button>
+    <span class="fr-count-val" id="frCountVal">4</span>
+    <span class="fr-count-lbl">players</span>
+    <button class="pcount-btn" onclick="frAdjustCount(1)">+</button>
+  </div>
   <div class="fr-players" id="frPlayers"></div>
   <div class="fr-result" id="frResult"></div>
   <button class="fr-roll-btn" id="frRollBtn" onclick="firstRollDo()">🎲 Roll</button>
@@ -1177,8 +1186,25 @@ function confirmReset(){
 // ── First Roll (who goes first) ──────────────────────────────────────────────
 let frMode=false;
 
+function frAdjustCount(delta){
+  const newCount=Math.max(2,Math.min(6,players.length+delta));
+  if(newCount===players.length) return;
+  if(newCount>players.length){
+    for(let i=players.length;i<newCount;i++){
+      players.push({name:`Player ${i+1}`,color:PCOLORS[i%PCOLORS.length]});
+    }
+  } else {
+    players.length=newCount;
+  }
+  draftCount=newCount;
+  document.getElementById('frCountVal').textContent=newCount;
+  // Rebuild player list
+  startFirstRoll();
+}
+
 function startFirstRoll(){
   frMode=true;
+  document.getElementById('frCountVal').textContent=players.length;
   const container=document.getElementById('frPlayers');
   container.innerHTML='';
   players.forEach((p,i)=>{
