@@ -349,6 +349,32 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
 @keyframes turnslide{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
 .turn-bar.anim .turn-current{animation:turnslide .32s cubic-bezier(.34,1.2,.64,1)}
 
+/* ── Turn timer ── */
+.turn-timer{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;min-width:52px}
+.turn-timer-val{font-size:1.1rem;font-weight:800;font-variant-numeric:tabular-nums;
+  color:var(--text);transition:color .3s}
+.turn-timer-val.warn{color:#f97316}
+.turn-timer-val.crit{color:#ef4444;animation:timerpulse 1s ease-in-out infinite}
+@keyframes timerpulse{0%,100%{opacity:1}50%{opacity:.5}}
+.turn-timer-lbl{font-size:.44rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Game timer (header) ── */
+.game-timer{display:flex;flex-direction:column;align-items:center;gap:1px}
+.game-timer b{font-size:1.1rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.game-timer span{font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Player time stats ── */
+.ptime-table{width:100%;border-collapse:collapse}
+.ptime-table th{font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);padding:6px 4px;text-align:left;border-bottom:1px solid var(--border)}
+.ptime-table th:not(:first-child){text-align:center}
+.ptime-table td{padding:7px 4px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.ptime-table td:not(:first-child){text-align:center;font-variant-numeric:tabular-nums}
+.ptime-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:7px;vertical-align:middle}
+.ptime-name{font-weight:700}
+.ptime-slowest{color:#f97316}
+.ptime-fastest{color:#10b981}
+
 /* ── Player setup panel ── */
 .player-panel{width:100%;max-width:580px;
   background:var(--surf);border:1px solid var(--border);border-radius:20px;overflow:hidden}
@@ -415,6 +441,7 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
       <div class="hstat"><b id="hRolls">0</b><span>Rolls</span></div>
       <div class="hstat"><b id="hAvg">—</b><span>Avg</span></div>
       <div class="hstat" id="hSince7stat"><b id="hSince7">—</b><span>Since 7</span></div>
+      <div class="game-timer"><b id="gameTimerVal">0:00</b><span>Game</span></div>
       <button class="sndbtn" id="sndBtn" onclick="toggleSound()" title="Toggle sound">🔊</button>
     </div>
   </header>
@@ -427,6 +454,10 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
         <div class="turn-tag">Now rolling</div>
         <div class="turn-name" id="turnName">Player 1</div>
       </div>
+    </div>
+    <div class="turn-timer" id="turnTimer">
+      <div class="turn-timer-val" id="turnTimerVal">0:00</div>
+      <div class="turn-timer-lbl">Turn</div>
     </div>
     <div class="turn-sep">→</div>
     <div class="turn-next-sec" id="turnNextSec">
@@ -525,6 +556,13 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
       <div>
         <div class="ctitle">Frequency distribution · actual vs expected</div>
         <div class="dchart" id="dchart"></div>
+      </div>
+      <div>
+        <div class="ctitle">Player time stats</div>
+        <table class="ptime-table" id="ptimeTable">
+          <thead><tr><th>Player</th><th>Turns</th><th>Total</th><th>Avg</th><th>Longest</th></tr></thead>
+          <tbody id="ptimeBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -665,6 +703,7 @@ const ANIMS=['ra','rb','rc','rd'];
 function rollDice(){
   if(rolling) return;
   rolling=true;
+  startGameTimer();
   const rollingPlayer={...players[curPlayer]};
 
   const btn=document.getElementById('rbtn');
@@ -778,6 +817,8 @@ function rollDice(){
     updateHeader();
     renderHist();
     renderChart();
+    recordTurnTime();
+    renderPlayerTimes();
     saveState();
 
     advancePlayer();
@@ -1135,10 +1176,94 @@ function applyPlayers(){
     return {name:inp.value.trim()||`Player ${i+1}`,color:PCOLORS[parseInt(sw.dataset.ci)]};
   });
   curPlayer=0; draftCount=players.length;
+  initPlayerTimes();
+  gameStartTime=null; turnStartTime=null; // reset timers on player change
   document.getElementById('ptoggleLbl').textContent=`👥 Players (${players.length})`;
   renderTurnBar();
   saveState();
   togglePlayerPanel();
+}
+
+// ── Game Timer ───────────────────────────────────────────────────────────────
+let gameStartTime=null, turnStartTime=null, timerRAF=null;
+// Per-player time tracking: {totalMs, turns, longestMs}
+let playerTimes=[];
+
+function initPlayerTimes(){
+  playerTimes=players.map(()=>({totalMs:0, turns:0, longestMs:0}));
+}
+
+function fmtTime(ms){
+  const sec=Math.floor(ms/1000);
+  const m=Math.floor(sec/60), s=sec%60;
+  if(m>=60){const h=Math.floor(m/60); return h+':'+(m%60<10?'0':'')+(m%60)+':'+(s<10?'0':'')+s;}
+  return m+':'+(s<10?'0':'')+s;
+}
+
+function tickTimer(){
+  const now=Date.now();
+  // Turn timer
+  if(turnStartTime){
+    const elapsed=now-turnStartTime;
+    const el=document.getElementById('turnTimerVal');
+    el.textContent=fmtTime(elapsed);
+    el.classList.toggle('warn', elapsed>=30000 && elapsed<60000);
+    el.classList.toggle('crit', elapsed>=60000);
+  }
+  // Game timer
+  if(gameStartTime){
+    document.getElementById('gameTimerVal').textContent=fmtTime(now-gameStartTime);
+  }
+  timerRAF=requestAnimationFrame(tickTimer);
+}
+
+function startGameTimer(){
+  if(!gameStartTime){
+    gameStartTime=Date.now();
+    turnStartTime=Date.now();
+    tickTimer();
+  }
+}
+
+function recordTurnTime(){
+  if(!turnStartTime) return;
+  const elapsed=Date.now()-turnStartTime;
+  if(playerTimes[curPlayer]){
+    playerTimes[curPlayer].totalMs+=elapsed;
+    playerTimes[curPlayer].turns++;
+    if(elapsed>playerTimes[curPlayer].longestMs) playerTimes[curPlayer].longestMs=elapsed;
+  }
+  turnStartTime=Date.now(); // reset for next player
+}
+
+function renderPlayerTimes(){
+  const body=document.getElementById('ptimeBody');
+  if(!body) return;
+  body.innerHTML='';
+  if(!playerTimes.length) return;
+
+  // Find slowest/fastest average for highlighting
+  const avgs=playerTimes.map(pt=>pt.turns?pt.totalMs/pt.turns:0);
+  const activeAvgs=avgs.filter(a=>a>0);
+  const slowest=activeAvgs.length?Math.max(...activeAvgs):0;
+  const fastest=activeAvgs.length?Math.min(...activeAvgs):0;
+
+  players.forEach((p,i)=>{
+    const pt=playerTimes[i];
+    if(!pt) return;
+    const tr=document.createElement('tr');
+    const avg=pt.turns?pt.totalMs/pt.turns:0;
+    const isSlowest=activeAvgs.length>1 && avg===slowest && avg>0;
+    const isFastest=activeAvgs.length>1 && avg===fastest && avg>0;
+
+    tr.innerHTML=`
+      <td><span class="ptime-dot" style="background:${p.color}"></span><span class="ptime-name">${p.name}</span></td>
+      <td>${pt.turns}</td>
+      <td>${pt.turns?fmtTime(pt.totalMs):'—'}</td>
+      <td class="${isSlowest?'ptime-slowest':isFastest?'ptime-fastest':''}">${pt.turns?fmtTime(avg):'—'}</td>
+      <td>${pt.turns?fmtTime(pt.longestMs):'—'}</td>`;
+    body.appendChild(tr);
+  });
 }
 
 // ── Persistence ──────────────────────────────────────────────────────────────
@@ -1149,7 +1274,8 @@ function saveState(){
     localStorage.setItem(SAVE_KEY,JSON.stringify({
       rc,sum,hi,lo:lo===Infinity?null:lo,
       cntRob,cntDbl,cntBc,since7,totals,hist,
-      players,curPlayer
+      players,curPlayer,
+      gameStartTime,playerTimes
     }));
   }catch(e){}
 }
@@ -1166,12 +1292,16 @@ function loadState(){
     if(s.hist?.length) hist=s.hist.slice(0,10);
     if(s.players?.length){players=s.players; draftCount=players.length;}
     if(s.curPlayer!=null) curPlayer=s.curPlayer%players.length;
+    if(s.gameStartTime){gameStartTime=s.gameStartTime; turnStartTime=Date.now(); tickTimer();}
+    if(s.playerTimes?.length) playerTimes=s.playerTimes;
   }catch(e){}
 }
 
 loadState();
+if(!playerTimes.length) initPlayerTimes();
 buildPlayerInputs();
 renderTurnBar();
+renderPlayerTimes();
 if(rc){ updateHeader(); renderHist(); renderChart(); }
 
 // ── iOS audio unlock ─────────────────────────────────────────────────────────
