@@ -1357,7 +1357,7 @@ function finishFirstRoll(winnerIdx){
   document.getElementById('frp-'+winnerIdx).classList.remove('done');
   document.getElementById('frp-'+winnerIdx).classList.add('winner');
   document.getElementById('frWinnerMsg').textContent=`🏆 ${players[winnerIdx].name} goes first!`;
-  document.getElementById('frStartBtn').style.display='';
+  document.getElementById('frStartBtn').style.display='inline-block';
 
   // Reorder players so winner is first
   const reordered=[...players.slice(winnerIdx),...players.slice(0,winnerIdx)];
