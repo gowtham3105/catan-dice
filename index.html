@@ -314,6 +314,33 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   90%{transform:translate(-2px,2px)}}
 .arena.shk{animation:shake .5s ease-out}
 
+/* ── Reset modal ── */
+#resetModal{position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s ease}
+#resetModal.show{opacity:1;pointer-events:all}
+.modal-box{background:linear-gradient(145deg,#142e47,#0d2b45);
+  border:1px solid rgba(245,230,200,.15);border-radius:24px;
+  padding:32px 28px;max-width:340px;width:90%;text-align:center;
+  transform:scale(.9);transition:transform .3s cubic-bezier(.34,1.2,.64,1)}
+#resetModal.show .modal-box{transform:scale(1)}
+.modal-icon{font-size:3rem;margin-bottom:12px}
+.modal-title{font-size:1.3rem;font-weight:900;letter-spacing:.1em;
+  color:var(--text);margin-bottom:8px}
+.modal-desc{font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:24px}
+.modal-btns{display:flex;gap:12px;justify-content:center}
+.modal-btn{padding:12px 28px;border-radius:50px;font-size:.8rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  border:none;transition:transform .15s,box-shadow .15s}
+.modal-btn:active{transform:scale(.95)}
+.modal-cancel{background:rgba(245,230,200,.08);border:1px solid rgba(245,230,200,.15);
+  color:var(--muted)}
+.modal-cancel:hover{background:rgba(245,230,200,.15);color:var(--text)}
+.modal-confirm{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;
+  box-shadow:0 4px 20px rgba(192,57,43,.4)}
+.modal-confirm:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(192,57,43,.6)}
+
 /* ── Reset button ── */
 .reset-btn{padding:10px 28px;font-size:.75rem;font-weight:700;
   letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
@@ -496,6 +523,19 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   <div class="rob-sub">Move the robber to a new hex<br>Steal a resource card from a neighbour</div>
   <div class="rob-since" id="robSince"></div>
   <button class="rob-dismiss" onclick="dismissRobber()">Got it — Continue</button>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div id="resetModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔄</div>
+    <div class="modal-title">New Game?</div>
+    <div class="modal-desc">This will reset all stats, roll history, and timers.<br>Your player setup will be kept.</div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-cancel" onclick="closeResetModal()">Cancel</button>
+      <button class="modal-btn modal-confirm" onclick="confirmReset()">Reset</button>
+    </div>
+  </div>
 </div>
 
 <div class="app" id="app">
@@ -1009,7 +1049,17 @@ function toggleStats(){
 
 // ── Reset game ───────────────────────────────────────────────────────────────
 function resetGame(){
-  if(!confirm('Start a new game? This will reset all stats, history, and timers.')) return;
+  document.getElementById('resetModal').classList.add('show');
+}
+function closeResetModal(){
+  document.getElementById('resetModal').classList.remove('show');
+}
+// Dismiss on backdrop click
+document.getElementById('resetModal').addEventListener('click', e=>{
+  if(e.target===document.getElementById('resetModal')) closeResetModal();
+});
+function confirmReset(){
+  closeResetModal();
   // Reset stats
   rc=0; sum=0; hi=0; lo=Infinity;
   cntRob=0; cntDbl=0; cntBc=0; since7=0;
