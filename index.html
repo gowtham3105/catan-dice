@@ -341,8 +341,14 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
 .fr-player.done{opacity:.5}
 .fr-player.winner{opacity:1;background:rgba(212,160,23,.15);border-color:rgba(212,160,23,.5);
   box-shadow:0 0 20px rgba(212,160,23,.2)}
-.fr-av{width:36px;height:36px;border-radius:50%;flex-shrink:0}
+.fr-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;cursor:pointer;
+  border:2px solid rgba(245,230,200,.2);transition:transform .15s}
+.fr-av:hover{transform:scale(1.15)}
 .fr-name{font-size:.95rem;font-weight:700;flex:1}
+.fr-name-input{flex:1;background:rgba(245,230,200,.06);border:1px solid rgba(245,230,200,.12);
+  border-radius:8px;padding:6px 10px;color:var(--text);font-size:.9rem;
+  font-weight:700;font-family:inherit;outline:none;transition:border-color .2s}
+.fr-name-input:focus{border-color:rgba(194,129,61,.5)}
 .fr-score{font-size:1.3rem;font-weight:900;min-width:32px;text-align:right;
   font-variant-numeric:tabular-nums;color:var(--muted)}
 .fr-player.done .fr-score{color:var(--text)}
@@ -1178,9 +1184,28 @@ function startFirstRoll(){
     const row=document.createElement('div');
     row.className='fr-player'+(i===0?' active':'');
     row.id='frp-'+i;
-    row.innerHTML=`<div class="fr-av" style="background:${p.color}"></div>
-      <div class="fr-name" style="color:${p.color}">${p.name}</div>
-      <div class="fr-score" id="frs-${i}">—</div>`;
+
+    let ci=PCOLORS.indexOf(p.color); if(ci<0) ci=i%PCOLORS.length;
+    const av=document.createElement('div'); av.className='fr-av';
+    av.style.background=PCOLORS[ci]; av.dataset.ci=ci; av.dataset.idx=i;
+    av.title='Tap to change colour';
+    av.onclick=function(){
+      const next=(parseInt(this.dataset.ci)+1)%PCOLORS.length;
+      this.dataset.ci=next; this.style.background=PCOLORS[next];
+      players[parseInt(this.dataset.idx)].color=PCOLORS[next];
+    };
+
+    const inp=document.createElement('input'); inp.className='fr-name-input';
+    inp.type='text'; inp.value=p.name; inp.placeholder=`Player ${i+1}`;
+    inp.dataset.idx=i;
+    inp.oninput=function(){
+      players[parseInt(this.dataset.idx)].name=this.value.trim()||`Player ${parseInt(this.dataset.idx)+1}`;
+    };
+
+    const score=document.createElement('div'); score.className='fr-score';
+    score.id='frs-'+i; score.textContent='—';
+
+    row.appendChild(av); row.appendChild(inp); row.appendChild(score);
     container.appendChild(row);
   });
   document.getElementById('frResult').textContent='';
@@ -1344,6 +1369,8 @@ function finishFirstRoll(winnerIdx){
 function firstRollStart(){
   document.getElementById('firstRoll').classList.remove('show');
   frMode=false;
+  draftCount=players.length;
+  document.getElementById('ptoggleLbl').textContent=`👥 Players (${players.length})`;
   buildDie('d1',1); buildDie('d2',1);
   initPlayerTimes();
   renderTurnBar();
