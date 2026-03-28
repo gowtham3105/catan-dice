@@ -581,6 +581,86 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   .ptime-table td{font-size:.72rem;padding:5px 2px}
   .ptime-dot{width:6px;height:6px;margin-right:4px}
 }
+
+/* ── Landscape layout ── */
+/* Portrait: wrapper is just a column (default) */
+.landscape-wrap{display:contents}
+.land-left,.land-right{display:contents}
+
+@media(orientation:landscape) and (min-width:680px){
+  .app{padding:14px 28px 10px;gap:8px;min-height:100vh;justify-content:flex-start}
+
+  /* Header: horizontal row in landscape */
+  header{max-width:1100px;flex-direction:row;justify-content:space-between;
+    align-items:center;gap:16px}
+  .logo-row{text-align:left}
+  .logo-title{font-size:1.4rem}
+  .hstats{width:auto;gap:18px}
+
+  .landscape-wrap{display:flex;gap:28px;width:100%;max-width:1100px;
+    align-items:stretch;flex:1}
+
+  /* Left: dice action area, vertically centered */
+  .land-left{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;flex:0 0 45%;min-width:0;position:sticky;top:14px;
+    height:calc(100vh - 100px)}
+  .land-left .turn-bar{max-width:100%;padding:12px 16px;margin-bottom:12px}
+  .land-left .arena{gap:24px}
+  .land-left .result-area{min-height:0}
+  .land-left .rbtn{padding:14px 52px;font-size:1rem}
+
+  /* Right: scrollable reference panel */
+  .land-right{display:flex;flex-direction:column;align-items:stretch;
+    gap:10px;flex:1;min-width:0;overflow-y:auto;
+    max-height:calc(100vh - 100px);padding-right:4px;
+    scrollbar-width:thin;scrollbar-color:rgba(245,230,200,.12) transparent}
+  .land-right::-webkit-scrollbar{width:5px}
+  .land-right::-webkit-scrollbar-thumb{background:rgba(245,230,200,.15);border-radius:4px}
+  .land-right .player-panel,
+  .land-right .pip-strip,
+  .land-right .hist-section,
+  .land-right .stats-panel,
+  .land-right .divider{width:100%;max-width:100%}
+  .land-right .hist-row{justify-content:flex-start}
+  .land-right .reset-btn{align-self:center;margin-top:4px}
+
+  /* Dice size */
+  :root{--ds:96px}
+  .dots{width:64px;height:64px;gap:5px}
+  .dot{width:13px;height:13px}
+  .rtotal{font-size:3.6rem}
+  .rbreak{font-size:.9rem}
+
+  .hint{width:100%;max-width:1100px;padding-top:4px}
+}
+
+/* Large landscape (iPad Pro 12.9", desktop) */
+@media(orientation:landscape) and (min-width:1024px){
+  .app{padding:18px 36px 12px}
+
+  header .logo-title{font-size:1.6rem}
+
+  :root{--ds:114px}
+  .dots{width:76px;height:76px;gap:7px}
+  .dot{width:15px;height:15px}
+  .rtotal{font-size:4.5rem}
+  .rbreak{font-size:1rem}
+  .land-left .rbtn{padding:16px 58px;font-size:1.05rem}
+
+  .landscape-wrap{gap:40px;max-width:1200px}
+  .land-left{gap:20px}
+  .land-left .turn-bar{margin-bottom:16px}
+  .land-right{gap:12px}
+}
+
+/* Extra-wide desktop */
+@media(orientation:landscape) and (min-width:1400px){
+  :root{--ds:124px}
+  .dots{width:82px;height:82px;gap:7px}
+  .dot{width:16px;height:16px}
+  .rtotal{font-size:5.2rem}
+  .landscape-wrap{max-width:1300px}
+}
 </style>
 </head>
 <body>
@@ -645,128 +725,137 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
     </div>
   </header>
 
-  <!-- Turn indicator -->
-  <div class="turn-bar" id="turnBar">
-    <div class="turn-current">
-      <div class="turn-avatar" id="turnAvatar"></div>
-      <div>
-        <div class="turn-tag">Now rolling</div>
-        <div class="turn-name" id="turnName">Player 1</div>
+  <div class="landscape-wrap">
+    <!-- LEFT: Action area -->
+    <div class="land-left">
+      <!-- Turn indicator -->
+      <div class="turn-bar" id="turnBar">
+        <div class="turn-current">
+          <div class="turn-avatar" id="turnAvatar"></div>
+          <div>
+            <div class="turn-tag">Now rolling</div>
+            <div class="turn-name" id="turnName">Player 1</div>
+          </div>
+        </div>
+        <div class="turn-timer" id="turnTimer">
+          <div class="turn-timer-val" id="turnTimerVal">0:00</div>
+          <div class="turn-timer-lbl">Turn</div>
+        </div>
+        <div class="turn-sep">→</div>
+        <div class="turn-next-sec" id="turnNextSec">
+          <div class="turn-next-tag">Up next</div>
+          <div class="turn-next-row">
+            <div class="turn-next-av" id="turnNextAv"></div>
+            <div class="turn-next-name" id="turnNextName">Player 2</div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="turn-timer" id="turnTimer">
-      <div class="turn-timer-val" id="turnTimerVal">0:00</div>
-      <div class="turn-timer-lbl">Turn</div>
-    </div>
-    <div class="turn-sep">→</div>
-    <div class="turn-next-sec" id="turnNextSec">
-      <div class="turn-next-tag">Up next</div>
-      <div class="turn-next-row">
-        <div class="turn-next-av" id="turnNextAv"></div>
-        <div class="turn-next-name" id="turnNextName">Player 2</div>
+
+      <!-- Dice -->
+      <div class="arena" id="arena">
+        <div class="die-scene" id="sc1">
+          <div class="die" id="d1" onclick="rollDice()">
+            <div class="face face--front" id="d1f"></div>
+            <div class="face face--back"  id="d1b"></div>
+            <div class="face face--right" id="d1r"></div>
+            <div class="face face--left"  id="d1l"></div>
+            <div class="face face--top"   id="d1t"></div>
+            <div class="face face--bot"   id="d1o"></div>
+          </div>
+        </div>
+        <div class="plus-sign">+</div>
+        <div class="die-scene" id="sc2">
+          <div class="die" id="d2" onclick="rollDice()">
+            <div class="face face--front" id="d2f"></div>
+            <div class="face face--back"  id="d2b"></div>
+            <div class="face face--right" id="d2r"></div>
+            <div class="face face--left"  id="d2l"></div>
+            <div class="face face--top"   id="d2t"></div>
+            <div class="face face--bot"   id="d2o"></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Result -->
+      <div class="result-area">
+        <div class="rtotal" id="rtotal">—</div>
+        <div class="rbreak" id="rbreak">&nbsp;</div>
+        <div class="rbadge" id="rbadge">&nbsp;</div>
+      </div>
+
+      <!-- Roll button -->
+      <button class="rbtn" id="rbtn" onclick="rollDice()">🎲 Roll Dice</button>
+    </div>
+
+    <!-- RIGHT: Reference area -->
+    <div class="land-right">
+      <!-- Player setup -->
+      <div class="player-panel">
+        <button class="stoggle" id="ptoggle" onclick="togglePlayerPanel()">
+          <span id="ptoggleLbl">👥 Players (4)</span>
+          <span class="sarrow">▼</span>
+        </button>
+        <div class="pbody" id="pbody">
+          <div class="pcount-row">
+            <button class="pcount-btn" onclick="adjustCount(-1)">−</button>
+            <span class="pcount-val" id="pcountVal">4</span>
+            <button class="pcount-btn" onclick="adjustCount(1)">+</button>
+            <span class="pcount-lbl">players</span>
+          </div>
+          <div class="pinputs" id="pinputs"></div>
+          <button class="papply-btn" onclick="applyPlayers()">Apply Changes</button>
+        </div>
+      </div>
+
+      <!-- Catan pip reference -->
+      <div class="pip-strip">
+        <div class="pip-strip-title">Catan probability reference</div>
+        <div class="pip-row" id="pipRow"></div>
+      </div>
+
+      <!-- History -->
+      <div class="hist-section">
+        <div class="sec-lbl">Roll History</div>
+        <div class="hist-row" id="histRow"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Stats -->
+      <div class="stats-panel">
+        <button class="stoggle" id="stoggle" onclick="toggleStats()">
+          <span>📊 Session Statistics</span>
+          <span class="sarrow">▼</span>
+        </button>
+        <div class="sbody" id="sbody">
+          <div class="sgrid">
+            <div class="scard"><div class="sval" id="stTotal">0</div><div class="sname">Total Rolls</div></div>
+            <div class="scard"><div class="sval" id="stAvg">—</div><div class="sname">Average</div></div>
+            <div class="scard"><div class="sval" id="stHi">—</div><div class="sname">Highest</div></div>
+            <div class="scard"><div class="sval" id="stLo">—</div><div class="sname">Lowest</div></div>
+            <div class="scard warn"><div class="sval" id="stRob">0</div><div class="sname">🏴‍☠️ Robbers</div></div>
+            <div class="scard"><div class="sval" id="stExpRob">0</div><div class="sname">Expected Robbers</div></div>
+            <div class="scard"><div class="sval" id="stDbl">0</div><div class="sname">Doubles</div></div>
+            <div class="scard"><div class="sval" id="stBc">0</div><div class="sname">Boxcars (12)</div></div>
+          </div>
+          <div>
+            <div class="ctitle">Frequency distribution · actual vs expected</div>
+            <div class="dchart" id="dchart"></div>
+          </div>
+          <div>
+            <div class="ctitle">Player time stats</div>
+            <table class="ptime-table" id="ptimeTable">
+              <thead><tr><th>Player</th><th>Turns</th><th>Total</th><th>Avg</th><th>Longest</th></tr></thead>
+              <tbody id="ptimeBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
     </div>
   </div>
 
-  <!-- Dice -->
-  <div class="arena" id="arena">
-    <div class="die-scene" id="sc1">
-      <div class="die" id="d1" onclick="rollDice()">
-        <div class="face face--front" id="d1f"></div>
-        <div class="face face--back"  id="d1b"></div>
-        <div class="face face--right" id="d1r"></div>
-        <div class="face face--left"  id="d1l"></div>
-        <div class="face face--top"   id="d1t"></div>
-        <div class="face face--bot"   id="d1o"></div>
-      </div>
-    </div>
-    <div class="plus-sign">+</div>
-    <div class="die-scene" id="sc2">
-      <div class="die" id="d2" onclick="rollDice()">
-        <div class="face face--front" id="d2f"></div>
-        <div class="face face--back"  id="d2b"></div>
-        <div class="face face--right" id="d2r"></div>
-        <div class="face face--left"  id="d2l"></div>
-        <div class="face face--top"   id="d2t"></div>
-        <div class="face face--bot"   id="d2o"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Result -->
-  <div class="result-area">
-    <div class="rtotal" id="rtotal">—</div>
-    <div class="rbreak" id="rbreak">&nbsp;</div>
-    <div class="rbadge" id="rbadge">&nbsp;</div>
-  </div>
-
-  <!-- Roll button -->
-  <button class="rbtn" id="rbtn" onclick="rollDice()">🎲 Roll Dice</button>
-
-  <!-- Player setup -->
-  <div class="player-panel">
-    <button class="stoggle" id="ptoggle" onclick="togglePlayerPanel()">
-      <span id="ptoggleLbl">👥 Players (4)</span>
-      <span class="sarrow">▼</span>
-    </button>
-    <div class="pbody" id="pbody">
-      <div class="pcount-row">
-        <button class="pcount-btn" onclick="adjustCount(-1)">−</button>
-        <span class="pcount-val" id="pcountVal">4</span>
-        <button class="pcount-btn" onclick="adjustCount(1)">+</button>
-        <span class="pcount-lbl">players</span>
-      </div>
-      <div class="pinputs" id="pinputs"></div>
-      <button class="papply-btn" onclick="applyPlayers()">Apply Changes</button>
-    </div>
-  </div>
-
-  <!-- Catan pip reference -->
-  <div class="pip-strip">
-    <div class="pip-strip-title">Catan probability reference</div>
-    <div class="pip-row" id="pipRow"></div>
-  </div>
-
-  <!-- History -->
-  <div class="hist-section">
-    <div class="sec-lbl">Roll History</div>
-    <div class="hist-row" id="histRow"></div>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- Stats -->
-  <div class="stats-panel">
-    <button class="stoggle" id="stoggle" onclick="toggleStats()">
-      <span>📊 Session Statistics</span>
-      <span class="sarrow">▼</span>
-    </button>
-    <div class="sbody" id="sbody">
-      <div class="sgrid">
-        <div class="scard"><div class="sval" id="stTotal">0</div><div class="sname">Total Rolls</div></div>
-        <div class="scard"><div class="sval" id="stAvg">—</div><div class="sname">Average</div></div>
-        <div class="scard"><div class="sval" id="stHi">—</div><div class="sname">Highest</div></div>
-        <div class="scard"><div class="sval" id="stLo">—</div><div class="sname">Lowest</div></div>
-        <div class="scard warn"><div class="sval" id="stRob">0</div><div class="sname">🏴‍☠️ Robbers</div></div>
-        <div class="scard"><div class="sval" id="stExpRob">0</div><div class="sname">Expected Robbers</div></div>
-        <div class="scard"><div class="sval" id="stDbl">0</div><div class="sname">Doubles</div></div>
-        <div class="scard"><div class="sval" id="stBc">0</div><div class="sname">Boxcars (12)</div></div>
-      </div>
-      <div>
-        <div class="ctitle">Frequency distribution · actual vs expected</div>
-        <div class="dchart" id="dchart"></div>
-      </div>
-      <div>
-        <div class="ctitle">Player time stats</div>
-        <table class="ptime-table" id="ptimeTable">
-          <thead><tr><th>Player</th><th>Turns</th><th>Total</th><th>Avg</th><th>Longest</th></tr></thead>
-          <tbody id="ptimeBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
   <div class="hint">SPACE · ENTER · TAP DICE to roll &nbsp;|&nbsp; Shake on mobile</div>
 </div>
 
