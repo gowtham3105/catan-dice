@@ -322,6 +322,61 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   90%{transform:translate(-2px,2px)}}
 .arena.shk{animation:shake .5s ease-out}
 
+/* ── First Roll overlay ── */
+#firstRoll{position:fixed;inset:0;z-index:450;
+  background:rgba(0,0,0,.88);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  opacity:0;pointer-events:none;transition:opacity .35s ease}
+#firstRoll.show{opacity:1;pointer-events:all}
+.fr-title{font-size:1.4rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+  background:linear-gradient(135deg,#d4a017,#f5e6c8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.fr-sub{font-size:.82rem;color:var(--muted);letter-spacing:.08em;text-align:center}
+.fr-players{display:flex;flex-direction:column;gap:10px;width:85%;max-width:340px;margin:8px 0}
+.fr-player{display:flex;align-items:center;gap:12px;padding:10px 16px;
+  background:rgba(245,230,200,.05);border:1px solid rgba(245,230,200,.1);
+  border-radius:14px;transition:all .3s}
+.fr-player.active{background:rgba(245,230,200,.1);border-color:rgba(245,230,200,.25);
+  box-shadow:0 0 16px rgba(245,230,200,.08)}
+.fr-player.done{opacity:.5}
+.fr-player.winner{opacity:1;background:rgba(212,160,23,.15);border-color:rgba(212,160,23,.5);
+  box-shadow:0 0 20px rgba(212,160,23,.2)}
+.fr-av{width:36px;height:36px;border-radius:50%;flex-shrink:0}
+.fr-name{font-size:.95rem;font-weight:700;flex:1}
+.fr-score{font-size:1.3rem;font-weight:900;min-width:32px;text-align:right;
+  font-variant-numeric:tabular-nums;color:var(--muted)}
+.fr-player.done .fr-score{color:var(--text)}
+.fr-player.winner .fr-score{color:#d4a017}
+.fr-roll-btn{padding:14px 48px;font-size:.95rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#fff;
+  background:linear-gradient(135deg,#c0392b,#e74c3c,#b5451b);
+  border:none;border-radius:50px;cursor:pointer;
+  box-shadow:0 4px 24px rgba(192,57,43,.4);transition:transform .15s,box-shadow .15s}
+.fr-roll-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(192,57,43,.6)}
+.fr-roll-btn:active{transform:translateY(1px)}
+.fr-roll-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.fr-result{font-size:1.8rem;font-weight:900;min-height:44px;
+  color:var(--text);text-align:center}
+.fr-winner-msg{font-size:1.1rem;font-weight:800;letter-spacing:.1em;
+  color:#d4a017;text-align:center;margin-top:4px}
+.fr-start-btn{padding:14px 48px;font-size:.95rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#fff;
+  background:linear-gradient(135deg,#3a7d44,#5daa68);
+  border:none;border-radius:50px;cursor:pointer;
+  box-shadow:0 4px 24px rgba(58,125,68,.4);transition:transform .15s,box-shadow .15s;
+  display:none}
+.fr-start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(58,125,68,.6)}
+
+@media(max-width:480px){
+  .fr-title{font-size:1.1rem}
+  .fr-player{padding:8px 12px;gap:10px}
+  .fr-av{width:28px;height:28px}
+  .fr-name{font-size:.82rem}
+  .fr-score{font-size:1.1rem}
+  .fr-roll-btn,.fr-start-btn{padding:12px 36px;font-size:.85rem}
+  .fr-result{font-size:1.4rem}
+}
+
 /* ── Reset modal ── */
 #resetModal{position:fixed;inset:0;z-index:500;
   background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
@@ -531,6 +586,17 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   <div class="rob-sub">Move the robber to a new hex<br>Steal a resource card from a neighbour</div>
   <div class="rob-since" id="robSince"></div>
   <button class="rob-dismiss" onclick="dismissRobber()">Got it — Continue</button>
+</div>
+
+<!-- First Roll Overlay -->
+<div id="firstRoll">
+  <div class="fr-title">🎲 Who Goes First?</div>
+  <div class="fr-sub">Each player rolls once — highest total starts!</div>
+  <div class="fr-players" id="frPlayers"></div>
+  <div class="fr-result" id="frResult"></div>
+  <button class="fr-roll-btn" id="frRollBtn" onclick="firstRollDo()">🎲 Roll</button>
+  <div class="fr-winner-msg" id="frWinnerMsg"></div>
+  <button class="fr-start-btn" id="frStartBtn" onclick="firstRollStart()">Start Game →</button>
 </div>
 
 <!-- Reset Confirmation Modal -->
@@ -825,7 +891,7 @@ const totals={}; for(let i=2;i<=12;i++) totals[i]=0;
 const ANIMS=['ra','rb','rc','rd'];
 
 function rollDice(){
-  if(rolling) return;
+  if(rolling||frMode) return;
   rolling=true;
   startGameTimer();
   const rollingPlayer={...players[curPlayer]};
@@ -1096,6 +1162,192 @@ function confirmReset(){
   renderHist();
   renderChart();
   renderTurnBar();
+  renderPlayerTimes();
+  saveState();
+  startFirstRoll();
+}
+
+// ── First Roll (who goes first) ──────────────────────────────────────────────
+let frMode=false, frIdx=0, frScores=[], frRolling=false;
+
+function startFirstRoll(){
+  frMode=true; frIdx=0; frScores=players.map(()=>null); frRolling=false;
+  const container=document.getElementById('frPlayers');
+  container.innerHTML='';
+  players.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='fr-player'+(i===0?' active':'');
+    row.id='frp-'+i;
+    row.innerHTML=`<div class="fr-av" style="background:${p.color}"></div>
+      <div class="fr-name" style="color:${p.color}">${p.name}</div>
+      <div class="fr-score" id="frs-${i}">—</div>`;
+    container.appendChild(row);
+  });
+  document.getElementById('frResult').textContent='';
+  document.getElementById('frWinnerMsg').textContent='';
+  document.getElementById('frRollBtn').style.display='';
+  document.getElementById('frRollBtn').disabled=false;
+  document.getElementById('frStartBtn').style.display='none';
+  document.getElementById('firstRoll').classList.add('show');
+}
+
+function firstRollDo(){
+  if(frRolling) return;
+  frRolling=true;
+  const btn=document.getElementById('frRollBtn');
+  btn.disabled=true;
+  playDiceRoll();
+
+  // Animate dice in main arena too
+  const e1=document.getElementById('d1'), e2=document.getElementById('d2');
+  const an1=ANIMS[Math.floor(Math.random()*4)];
+  const an2=ANIMS[Math.floor(Math.random()*4)];
+  e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
+  void e1.offsetWidth;
+  e1.classList.add(an1); e2.classList.add(an2);
+
+  const resultEl=document.getElementById('frResult');
+  resultEl.textContent='Rolling...';
+
+  setTimeout(()=>{
+    e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
+    const v1=d6(), v2=d6(), total=v1+v2;
+    buildDie('d1',v1); buildDie('d2',v2);
+    playResultSound(total, v1===v2);
+
+    // Particles
+    const r1=e1.getBoundingClientRect(), r2=e2.getBoundingClientRect();
+    burst(r1.left+r1.width/2, r1.top+r1.height/2, 20);
+    burst(r2.left+r2.width/2, r2.top+r2.height/2, 20);
+
+    frScores[frIdx]=total;
+    document.getElementById('frs-'+frIdx).textContent=total;
+    document.getElementById('frp-'+frIdx).classList.remove('active');
+    document.getElementById('frp-'+frIdx).classList.add('done');
+    resultEl.textContent=`${players[frIdx].name} rolled ${total}  (${v1} + ${v2})`;
+
+    frIdx++;
+    frRolling=false;
+
+    if(frIdx<players.length){
+      // Next player
+      document.getElementById('frp-'+frIdx).classList.add('active');
+      btn.disabled=false;
+      btn.textContent=`🎲 Roll for ${players[frIdx].name}`;
+    } else {
+      // All done — find winner
+      const maxScore=Math.max(...frScores);
+      const winners=frScores.reduce((acc,s,i)=>s===maxScore?[...acc,i]:acc,[]);
+
+      if(winners.length>1){
+        // Tie — re-roll tied players
+        resultEl.textContent='Tie! Re-rolling...';
+        setTimeout(()=>{
+          // Reset only tied players
+          frIdx=0;
+          const tiedPlayers=winners.map(i=>({origIdx:i, player:players[i]}));
+          // Mark non-tied as done, tied as needing re-roll
+          frScores=frScores.map((s,i)=>winners.includes(i)?null:s);
+          // Find first tied player to roll
+          const nextTied=frScores.indexOf(null);
+          frIdx=nextTied;
+          winners.forEach(i=>{
+            document.getElementById('frp-'+i).classList.remove('done');
+            document.getElementById('frs-'+i).textContent='—';
+          });
+          document.getElementById('frp-'+nextTied).classList.add('active');
+          btn.style.display='';
+          btn.disabled=false;
+          btn.textContent=`🎲 Roll for ${players[nextTied].name}`;
+          // Override firstRollDo for tie-breaking
+          btn.onclick=function tieRoll(){
+            if(frRolling) return;
+            frRolling=true;
+            btn.disabled=true;
+            playDiceRoll();
+            const te1=document.getElementById('d1'), te2=document.getElementById('d2');
+            te1.classList.remove(...ANIMS); te2.classList.remove(...ANIMS);
+            void te1.offsetWidth;
+            te1.classList.add(ANIMS[Math.floor(Math.random()*4)]);
+            te2.classList.add(ANIMS[Math.floor(Math.random()*4)]);
+            resultEl.textContent='Rolling...';
+            setTimeout(()=>{
+              te1.classList.remove(...ANIMS); te2.classList.remove(...ANIMS);
+              const tv1=d6(),tv2=d6(),tt=tv1+tv2;
+              buildDie('d1',tv1); buildDie('d2',tv2);
+              playResultSound(tt, tv1===tv2);
+              frScores[frIdx]=tt;
+              document.getElementById('frs-'+frIdx).textContent=tt;
+              document.getElementById('frp-'+frIdx).classList.remove('active');
+              document.getElementById('frp-'+frIdx).classList.add('done');
+              resultEl.textContent=`${players[frIdx].name} rolled ${tt}  (${tv1} + ${tv2})`;
+              // Find next null
+              const nextNull=frScores.indexOf(null,frIdx+1)===-1?frScores.indexOf(null):frScores.indexOf(null,frIdx+1);
+              frRolling=false;
+              if(nextNull!==-1 && frScores[nextNull]===null){
+                frIdx=nextNull;
+                document.getElementById('frp-'+nextNull).classList.add('active');
+                btn.disabled=false;
+                btn.textContent=`🎲 Roll for ${players[nextNull].name}`;
+              } else {
+                // Check for another tie among the re-rolled
+                const newMax=Math.max(...winners.map(i=>frScores[i]));
+                const newWinners=winners.filter(i=>frScores[i]===newMax);
+                if(newWinners.length>1){
+                  // Still tied — reset and go again
+                  setTimeout(()=>{
+                    resultEl.textContent='Still tied! Rolling again...';
+                    setTimeout(()=>{
+                      newWinners.forEach(i=>{
+                        frScores[i]=null;
+                        document.getElementById('frp-'+i).classList.remove('done');
+                        document.getElementById('frs-'+i).textContent='—';
+                      });
+                      frIdx=newWinners[0];
+                      document.getElementById('frp-'+frIdx).classList.add('active');
+                      btn.disabled=false;
+                      btn.textContent=`🎲 Roll for ${players[frIdx].name}`;
+                    },800);
+                  },200);
+                } else {
+                  finishFirstRoll(newWinners[0]);
+                  btn.onclick=function(){firstRollDo();};
+                }
+              }
+            },740);
+          };
+        },600);
+        return;
+      }
+
+      finishFirstRoll(winners[0]);
+    }
+  },740);
+}
+
+function finishFirstRoll(winnerIdx){
+  const btn=document.getElementById('frRollBtn');
+  btn.style.display='none';
+  document.getElementById('frp-'+winnerIdx).classList.remove('done');
+  document.getElementById('frp-'+winnerIdx).classList.add('winner');
+  document.getElementById('frWinnerMsg').textContent=`🏆 ${players[winnerIdx].name} goes first!`;
+  document.getElementById('frStartBtn').style.display='';
+
+  // Reorder players so winner is first
+  const reordered=[...players.slice(winnerIdx),...players.slice(0,winnerIdx)];
+  players=reordered;
+  curPlayer=0;
+  draftCount=players.length;
+  document.getElementById('ptoggleLbl').textContent=`👥 Players (${players.length})`;
+}
+
+function firstRollStart(){
+  document.getElementById('firstRoll').classList.remove('show');
+  frMode=false;
+  buildDie('d1',1); buildDie('d2',1);
+  initPlayerTimes();
+  renderTurnBar();
+  buildPlayerInputs();
   renderPlayerTimes();
   saveState();
 }
@@ -1471,6 +1723,7 @@ if(!playerTimes.length) initPlayerTimes();
 buildPlayerInputs();
 renderTurnBar();
 renderPlayerTimes();
+if(!rc) startFirstRoll(); // First load with no history — do first roll
 if(rc){
   updateHeader(); renderHist(); renderChart();
   if(hist.length){
