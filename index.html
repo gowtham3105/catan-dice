@@ -1175,16 +1175,15 @@ function confirmReset(){
 }
 
 // ── First Roll (who goes first) ──────────────────────────────────────────────
-let frMode=false, frIdx=0, frScores=[], frRolling=false;
+let frMode=false;
 
 function startFirstRoll(){
-  frMode=true; frIdx=0; frScores=players.map(()=>null); frRolling=false;
+  frMode=true;
   const container=document.getElementById('frPlayers');
   container.innerHTML='';
   players.forEach((p,i)=>{
     const row=document.createElement('div');
-    row.className='fr-player'+(i===0?' active':'');
-    row.id='frp-'+i;
+    row.className='fr-player'; row.id='frp-'+i;
 
     let ci=PCOLORS.indexOf(p.color); if(ci<0) ci=i%PCOLORS.length;
     const av=document.createElement('div'); av.className='fr-av';
@@ -1211,151 +1210,114 @@ function startFirstRoll(){
   });
   document.getElementById('frResult').textContent='';
   document.getElementById('frWinnerMsg').textContent='';
-  document.getElementById('frRollBtn').style.display='';
+  document.getElementById('frRollBtn').style.display='inline-block';
   document.getElementById('frRollBtn').disabled=false;
+  document.getElementById('frRollBtn').textContent='🎲 Pick First Player';
   document.getElementById('frStartBtn').style.display='none';
   document.getElementById('firstRoll').classList.add('show');
 }
 
 function firstRollDo(){
-  if(frRolling) return;
-  frRolling=true;
   const btn=document.getElementById('frRollBtn');
   btn.disabled=true;
-  playDiceRoll();
+  btn.textContent='Rolling...';
 
-  // Animate dice in main arena too
-  const e1=document.getElementById('d1'), e2=document.getElementById('d2');
-  const an1=ANIMS[Math.floor(Math.random()*4)];
-  const an2=ANIMS[Math.floor(Math.random()*4)];
-  e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
-  void e1.offsetWidth;
-  e1.classList.add(an1); e2.classList.add(an2);
+  // Roll all players with staggered reveals
+  const scores=players.map(()=>({v1:d6(),v2:d6()}));
+  scores.forEach(s=>s.total=s.v1+s.v2);
 
-  const resultEl=document.getElementById('frResult');
-  resultEl.textContent='Rolling...';
-
-  setTimeout(()=>{
-    e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
-    const v1=d6(), v2=d6(), total=v1+v2;
-    buildDie('d1',v1); buildDie('d2',v2);
-    playResultSound(total, v1===v2);
-
-    // Particles
-    const r1=e1.getBoundingClientRect(), r2=e2.getBoundingClientRect();
-    burst(r1.left+r1.width/2, r1.top+r1.height/2, 20);
-    burst(r2.left+r2.width/2, r2.top+r2.height/2, 20);
-
-    frScores[frIdx]=total;
-    document.getElementById('frs-'+frIdx).textContent=total;
-    document.getElementById('frp-'+frIdx).classList.remove('active');
-    document.getElementById('frp-'+frIdx).classList.add('done');
-    resultEl.textContent=`${players[frIdx].name} rolled ${total}  (${v1} + ${v2})`;
-
-    frIdx++;
-    frRolling=false;
-
-    if(frIdx<players.length){
-      // Next player
-      document.getElementById('frp-'+frIdx).classList.add('active');
-      btn.disabled=false;
-      btn.textContent=`🎲 Roll for ${players[frIdx].name}`;
-    } else {
-      // All done — find winner
-      const maxScore=Math.max(...frScores);
-      const winners=frScores.reduce((acc,s,i)=>s===maxScore?[...acc,i]:acc,[]);
-
-      if(winners.length>1){
-        // Tie — re-roll tied players
-        resultEl.textContent='Tie! Re-rolling...';
-        setTimeout(()=>{
-          // Reset only tied players
-          frIdx=0;
-          const tiedPlayers=winners.map(i=>({origIdx:i, player:players[i]}));
-          // Mark non-tied as done, tied as needing re-roll
-          frScores=frScores.map((s,i)=>winners.includes(i)?null:s);
-          // Find first tied player to roll
-          const nextTied=frScores.indexOf(null);
-          frIdx=nextTied;
-          winners.forEach(i=>{
-            document.getElementById('frp-'+i).classList.remove('done');
-            document.getElementById('frs-'+i).textContent='—';
-          });
-          document.getElementById('frp-'+nextTied).classList.add('active');
-          btn.style.display='';
-          btn.disabled=false;
-          btn.textContent=`🎲 Roll for ${players[nextTied].name}`;
-          // Override firstRollDo for tie-breaking
-          btn.onclick=function tieRoll(){
-            if(frRolling) return;
-            frRolling=true;
-            btn.disabled=true;
-            playDiceRoll();
-            const te1=document.getElementById('d1'), te2=document.getElementById('d2');
-            te1.classList.remove(...ANIMS); te2.classList.remove(...ANIMS);
-            void te1.offsetWidth;
-            te1.classList.add(ANIMS[Math.floor(Math.random()*4)]);
-            te2.classList.add(ANIMS[Math.floor(Math.random()*4)]);
-            resultEl.textContent='Rolling...';
-            setTimeout(()=>{
-              te1.classList.remove(...ANIMS); te2.classList.remove(...ANIMS);
-              const tv1=d6(),tv2=d6(),tt=tv1+tv2;
-              buildDie('d1',tv1); buildDie('d2',tv2);
-              playResultSound(tt, tv1===tv2);
-              frScores[frIdx]=tt;
-              document.getElementById('frs-'+frIdx).textContent=tt;
-              document.getElementById('frp-'+frIdx).classList.remove('active');
-              document.getElementById('frp-'+frIdx).classList.add('done');
-              resultEl.textContent=`${players[frIdx].name} rolled ${tt}  (${tv1} + ${tv2})`;
-              // Find next null
-              const nextNull=frScores.indexOf(null,frIdx+1)===-1?frScores.indexOf(null):frScores.indexOf(null,frIdx+1);
-              frRolling=false;
-              if(nextNull!==-1 && frScores[nextNull]===null){
-                frIdx=nextNull;
-                document.getElementById('frp-'+nextNull).classList.add('active');
-                btn.disabled=false;
-                btn.textContent=`🎲 Roll for ${players[nextNull].name}`;
-              } else {
-                // Check for another tie among the re-rolled
-                const newMax=Math.max(...winners.map(i=>frScores[i]));
-                const newWinners=winners.filter(i=>frScores[i]===newMax);
-                if(newWinners.length>1){
-                  // Still tied — reset and go again
-                  setTimeout(()=>{
-                    resultEl.textContent='Still tied! Rolling again...';
-                    setTimeout(()=>{
-                      newWinners.forEach(i=>{
-                        frScores[i]=null;
-                        document.getElementById('frp-'+i).classList.remove('done');
-                        document.getElementById('frs-'+i).textContent='—';
-                      });
-                      frIdx=newWinners[0];
-                      document.getElementById('frp-'+frIdx).classList.add('active');
-                      btn.disabled=false;
-                      btn.textContent=`🎲 Roll for ${players[frIdx].name}`;
-                    },800);
-                  },200);
-                } else {
-                  finishFirstRoll(newWinners[0]);
-                  btn.onclick=function(){firstRollDo();};
-                }
-              }
-            },740);
-          };
-        },600);
-        return;
-      }
-
-      finishFirstRoll(winners[0]);
+  let i=0;
+  function revealNext(){
+    if(i>=players.length){
+      // All revealed — find winner
+      finishAutoRoll(scores);
+      return;
     }
-  },740);
+    const s=scores[i];
+    playDiceRoll();
+
+    // Animate dice
+    const e1=document.getElementById('d1'), e2=document.getElementById('d2');
+    e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
+    void e1.offsetWidth;
+    e1.classList.add(ANIMS[Math.floor(Math.random()*4)]);
+    e2.classList.add(ANIMS[Math.floor(Math.random()*4)]);
+
+    const row=document.getElementById('frp-'+i);
+    row.classList.add('active');
+
+    setTimeout(()=>{
+      e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
+      buildDie('d1',s.v1); buildDie('d2',s.v2);
+      playResultSound(s.total, s.v1===s.v2);
+
+      document.getElementById('frs-'+i).textContent=s.total;
+      row.classList.remove('active');
+      row.classList.add('done');
+      document.getElementById('frResult').textContent=
+        `${players[i].name}: ${s.v1} + ${s.v2} = ${s.total}`;
+
+      i++;
+      setTimeout(revealNext, 300);
+    },700);
+  }
+  revealNext();
 }
 
-function finishFirstRoll(winnerIdx){
-  const btn=document.getElementById('frRollBtn');
-  btn.style.display='none';
-  document.getElementById('frp-'+winnerIdx).classList.remove('done');
-  document.getElementById('frp-'+winnerIdx).classList.add('winner');
+function finishAutoRoll(scores){
+  const maxScore=Math.max(...scores.map(s=>s.total));
+  const winners=scores.reduce((acc,s,i)=>s.total===maxScore?[...acc,i]:acc,[]);
+
+  if(winners.length>1){
+    // Tie — re-roll only tied players
+    document.getElementById('frResult').textContent='Tie! Re-rolling...';
+    setTimeout(()=>{
+      winners.forEach(i=>{
+        scores[i]={v1:d6(),v2:d6()};
+        scores[i].total=scores[i].v1+scores[i].v2;
+        document.getElementById('frp-'+i).classList.remove('done');
+        document.getElementById('frs-'+i).textContent='—';
+      });
+      let ti=0;
+      function revealTied(){
+        if(ti>=winners.length){
+          finishAutoRoll(scores);
+          return;
+        }
+        const idx=winners[ti], s=scores[idx];
+        playDiceRoll();
+        const e1=document.getElementById('d1'), e2=document.getElementById('d2');
+        e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
+        void e1.offsetWidth;
+        e1.classList.add(ANIMS[Math.floor(Math.random()*4)]);
+        e2.classList.add(ANIMS[Math.floor(Math.random()*4)]);
+        document.getElementById('frp-'+idx).classList.add('active');
+        setTimeout(()=>{
+          e1.classList.remove(...ANIMS); e2.classList.remove(...ANIMS);
+          buildDie('d1',s.v1); buildDie('d2',s.v2);
+          playResultSound(s.total, s.v1===s.v2);
+          document.getElementById('frs-'+idx).textContent=s.total;
+          document.getElementById('frp-'+idx).classList.remove('active');
+          document.getElementById('frp-'+idx).classList.add('done');
+          document.getElementById('frResult').textContent=
+            `${players[idx].name}: ${s.v1} + ${s.v2} = ${s.total}`;
+          ti++;
+          setTimeout(revealTied, 300);
+        },700);
+      }
+      revealTied();
+    },600);
+    return;
+  }
+
+  // Single winner
+  const winnerIdx=winners[0];
+  document.getElementById('frRollBtn').style.display='none';
+  players.forEach((_,i)=>{
+    document.getElementById('frp-'+i).classList.remove('active','done');
+    if(i===winnerIdx) document.getElementById('frp-'+i).classList.add('winner');
+    else document.getElementById('frp-'+i).classList.add('done');
+  });
   document.getElementById('frWinnerMsg').textContent=`🏆 ${players[winnerIdx].name} goes first!`;
   document.getElementById('frStartBtn').style.display='inline-block';
 
@@ -1363,8 +1325,6 @@ function finishFirstRoll(winnerIdx){
   const reordered=[...players.slice(winnerIdx),...players.slice(0,winnerIdx)];
   players=reordered;
   curPlayer=0;
-  draftCount=players.length;
-  document.getElementById('ptoggleLbl').textContent=`👥 Players (${players.length})`;
 }
 
 function firstRollStart(){
