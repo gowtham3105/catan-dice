@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Catan Dice</title>
+<meta name="description" content="A beautiful dice roller for Settlers of Catan"/>
+<meta name="theme-color" content="#0d2b45"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Catan Dice"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="icon-192.svg" type="image/svg+xml"/>
+<link rel="apple-touch-icon" href="icon-192.svg"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -1510,6 +1518,11 @@ if(window.DeviceMotionEvent){
     const now=Date.now();
     if(f>30&&now-lastShake>1200){lastShake=now;rollDice();}
   });
+}
+
+// ── PWA Service Worker ──────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
 </body>
