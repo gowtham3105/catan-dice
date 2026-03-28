@@ -315,6 +315,69 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
 
 .hint{font-size:.6rem;color:rgba(255,255,255,.15);letter-spacing:.14em;text-align:center}
 
+/* ── Sound toggle ── */
+.sndbtn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:50%;width:36px;height:36px;font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .18s,transform .15s;flex-shrink:0}
+.sndbtn:hover{background:rgba(255,255,255,.12);transform:scale(1.1)}
+.sndbtn:active{transform:scale(.92)}
+
+/* ── Turn bar ── */
+.turn-bar{width:100%;max-width:580px;
+  background:var(--surf);border:1px solid var(--border);border-radius:16px;
+  padding:16px 20px;display:flex;align-items:center;gap:16px;
+  position:relative;overflow:hidden}
+/* Left colour stripe = current player's colour */
+.turn-bar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--tc,var(--v));border-radius:16px 0 0 16px;transition:background .35s}
+.turn-current{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.turn-avatar{width:48px;height:48px;border-radius:50%;flex-shrink:0;
+  transition:background .35s,box-shadow .35s}
+.turn-tag{font-size:.5rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:3px}
+.turn-name{font-size:1.2rem;font-weight:900;line-height:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .3s}
+.turn-sep{font-size:1.6rem;color:rgba(255,255,255,.1);flex-shrink:0;user-select:none}
+.turn-next-sec{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
+.turn-next-tag{font-size:.48rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px}
+.turn-next-row{display:flex;align-items:center;gap:7px}
+.turn-next-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;opacity:.75;
+  transition:background .35s}
+.turn-next-name{font-size:.88rem;font-weight:700;color:var(--muted);white-space:nowrap}
+@keyframes turnslide{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.turn-bar.anim .turn-current{animation:turnslide .32s cubic-bezier(.34,1.2,.64,1)}
+
+/* ── Player setup panel ── */
+.player-panel{width:100%;max-width:580px;
+  background:var(--surf);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.pbody{padding:0 18px 16px;display:none;flex-direction:column;gap:11px}
+.pbody.open{display:flex}
+.pcount-row{display:flex;align-items:center;justify-content:center;gap:12px;padding-top:2px}
+.pcount-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1.2rem;
+  line-height:1;cursor:pointer;transition:background .15s}
+.pcount-btn:hover{background:rgba(255,255,255,.15)}
+.pcount-val{font-size:1.5rem;font-weight:800;min-width:28px;text-align:center}
+.pcount-lbl{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.pinputs{display:flex;flex-direction:column;gap:7px}
+.pinput-row{display:flex;align-items:center;gap:10px}
+.pcolor-swatch{width:27px;height:27px;border-radius:50%;flex-shrink:0;cursor:pointer;
+  border:2px solid rgba(255,255,255,.18);transition:transform .15s}
+.pcolor-swatch:hover{transform:scale(1.22)}
+.pname-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:8px 11px;color:var(--text);font-size:.85rem;
+  font-family:inherit;outline:none;transition:border-color .2s}
+.pname-input:focus{border-color:rgba(139,92,246,.5)}
+.papply-btn{padding:11px;border-radius:12px;
+  background:linear-gradient(135deg,var(--v),#2563eb);
+  border:none;color:#fff;font-size:.78rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+.papply-btn:hover{opacity:.85}
+/* Tiny player colour dot in history chips */
+.hist-pdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
 @media(max-width:480px){
   :root{--ds:92px}
   .arena{gap:24px}
@@ -352,8 +415,28 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
       <div class="hstat"><b id="hRolls">0</b><span>Rolls</span></div>
       <div class="hstat"><b id="hAvg">—</b><span>Avg</span></div>
       <div class="hstat" id="hSince7stat"><b id="hSince7">—</b><span>Since 7</span></div>
+      <button class="sndbtn" id="sndBtn" onclick="toggleSound()" title="Toggle sound">🔊</button>
     </div>
   </header>
+
+  <!-- Turn indicator -->
+  <div class="turn-bar" id="turnBar">
+    <div class="turn-current">
+      <div class="turn-avatar" id="turnAvatar"></div>
+      <div>
+        <div class="turn-tag">Now rolling</div>
+        <div class="turn-name" id="turnName">Player 1</div>
+      </div>
+    </div>
+    <div class="turn-sep">→</div>
+    <div class="turn-next-sec" id="turnNextSec">
+      <div class="turn-next-tag">Up next</div>
+      <div class="turn-next-row">
+        <div class="turn-next-av" id="turnNextAv"></div>
+        <div class="turn-next-name" id="turnNextName">Player 2</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Dice -->
   <div class="arena" id="arena">
@@ -389,6 +472,24 @@ header{width:100%;max-width:580px;display:flex;align-items:center;justify-conten
 
   <!-- Roll button -->
   <button class="rbtn" id="rbtn" onclick="rollDice()">🎲 Roll Dice</button>
+
+  <!-- Player setup -->
+  <div class="player-panel">
+    <button class="stoggle" id="ptoggle" onclick="togglePlayerPanel()">
+      <span id="ptoggleLbl">👥 Players (4)</span>
+      <span class="sarrow">▼</span>
+    </button>
+    <div class="pbody" id="pbody">
+      <div class="pcount-row">
+        <button class="pcount-btn" onclick="adjustCount(-1)">−</button>
+        <span class="pcount-val" id="pcountVal">4</span>
+        <button class="pcount-btn" onclick="adjustCount(1)">+</button>
+        <span class="pcount-lbl">players</span>
+      </div>
+      <div class="pinputs" id="pinputs"></div>
+      <button class="papply-btn" onclick="applyPlayers()">Apply Changes</button>
+    </div>
+  </div>
 
   <!-- Catan pip reference -->
   <div class="pip-strip">
@@ -564,6 +665,7 @@ const ANIMS=['ra','rb','rc','rd'];
 function rollDice(){
   if(rolling) return;
   rolling=true;
+  const rollingPlayer={...players[curPlayer]};
 
   const btn=document.getElementById('rbtn');
   const tot=document.getElementById('rtotal');
@@ -573,6 +675,7 @@ function rollDice(){
   const s1=document.getElementById('sc1'), s2=document.getElementById('sc2');
 
   btn.disabled=true;
+  playDiceRoll();
   tot.className='rtotal'; brk.className='rbreak'; bdg.className='rbadge';
   s1.className='die-scene'; s2.className='die-scene';
 
@@ -609,6 +712,8 @@ function rollDice(){
     const isSn  = total===2;
     const isBc  = total===12;
     const isDbl = v1===v2 && !isSn && !isBc;
+
+    playResultSound(total, isDbl);
 
     // Glow
     if(isRob)      {s1.classList.add('grob');s2.classList.add('grob');}
@@ -666,14 +771,16 @@ function rollDice(){
     if(isDbl) cntDbl++;
     if(isBc)  cntBc++;
 
-    hist.unshift({v1,v2,total});
+    hist.unshift({v1,v2,total,player:rollingPlayer});
     if(hist.length>10) hist.pop();
 
     buildPipStrip(total);
     updateHeader();
     renderHist();
     renderChart();
+    saveState();
 
+    advancePlayer();
     btn.disabled=false; rolling=false;
 
     // Show robber overlay last (after everything updated)
@@ -733,6 +840,11 @@ function renderHist(){
   hist.forEach(h=>{
     const chip=document.createElement('div');
     chip.className='hchip'+(h.total===7?' is7':h.total===12?' isbc':'');
+    if(h.player){
+      const pd=document.createElement('div'); pd.className='hist-pdot';
+      pd.style.cssText=`background:${h.player.color};box-shadow:0 0 5px ${h.player.color}80`;
+      pd.title=h.player.name; chip.appendChild(pd);
+    }
     [h.v1,h.v2].forEach(v=>{
       const md=document.createElement('div'); md.className='mdie';
       LAYOUT[v].forEach(on=>{
@@ -785,6 +897,289 @@ document.addEventListener('keydown',e=>{
     e.preventDefault(); rollDice();
   }
 });
+
+// ── Audio Engine ──────────────────────────────────────────────────────────────
+let actx = null;
+let soundEnabled = true;
+
+function getACtx(){
+  if(!actx){
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    // iOS/iPadOS: play a silent 1-sample buffer immediately to unlock the context
+    const b = actx.createBuffer(1, 1, actx.sampleRate);
+    const s = actx.createBufferSource();
+    s.buffer = b; s.connect(actx.destination); s.start(0);
+  }
+  if(actx.state==='suspended') actx.resume();
+  return actx;
+}
+
+// Play a synthesised tone
+function playNote(freq, type, startSec, durSec, vol=0.28, detune=0){
+  if(!soundEnabled) return;
+  const ctx = getACtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.value = freq;
+  if(detune) osc.detune.value = detune;
+  const t = ctx.currentTime + startSec;
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.linearRampToValueAtTime(vol, t + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(durSec, 0.03));
+  osc.start(t); osc.stop(t + durSec + 0.06);
+}
+
+// Play a burst of filtered noise (dice clack, rumble)
+function playNoise(startSec, durSec, freqCenter, vol=0.22){
+  if(!soundEnabled) return;
+  const ctx = getACtx();
+  const n = Math.ceil(ctx.sampleRate * durSec);
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = Math.random()*2-1;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'bandpass'; filt.frequency.value = freqCenter; filt.Q.value = 1.0;
+  const gain = ctx.createGain();
+  src.connect(filt); filt.connect(gain); gain.connect(ctx.destination);
+  const t = ctx.currentTime + startSec;
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + durSec);
+  src.start(t); src.stop(t + durSec + 0.02);
+}
+
+// Dice clatter played at roll start
+function playDiceRoll(){
+  if(!soundEnabled) return;
+  getACtx(); // warm up
+  for(let i=0;i<6;i++){
+    const t = i*0.10 + Math.random()*0.035;
+    playNoise(t, 0.07, 1200 + Math.random()*2200, 0.18);
+    playNote(70 + Math.random()*50, 'sine', t, 0.045, 0.09);
+  }
+}
+
+// Musical note frequencies (Hz)
+const HZ = {
+  C3:130.8, D3:146.8, E3:164.8, F3:174.6, G3:196, Ab3:207.7, A3:220,
+  C4:261.6, D4:293.7, E4:329.6, F4:349.2, Gb4:370, G4:392, A4:440, B4:493.9,
+  C5:523.3, D5:587.3, E5:659.3, Gb5:740, G5:784, A5:880,
+  C6:1046.5, E6:1318.5, G6:1568
+};
+
+// Distinct result sound per Catan number
+function playResultSound(total, isDbl){
+  if(!soundEnabled) return;
+  switch(total){
+    case 2: // Snake Eyes — sad descending minor
+      playNote(HZ.A4, 'sine',  0,    0.22, 0.28);
+      playNote(HZ.F4, 'sine',  0.17, 0.22, 0.24);
+      playNote(HZ.D4, 'sine',  0.33, 0.30, 0.20);
+      playNote(HZ.A3, 'sine',  0.50, 0.50, 0.16);
+      break;
+    case 3: // Low thud — single deep hit
+      playNote(HZ.D3, 'triangle', 0,    0.45, 0.30);
+      playNoise(0,    0.06, 800, 0.14);
+      break;
+    case 4: // Gentle two-note lift
+      playNote(HZ.E4, 'sine', 0,    0.25, 0.25);
+      playNote(HZ.G4, 'sine', 0.18, 0.28, 0.22);
+      break;
+    case 5: // Three-note ascending (good production number)
+      playNote(HZ.G4, 'sine', 0,    0.18, 0.25);
+      playNote(HZ.A4, 'sine', 0.13, 0.18, 0.23);
+      playNote(HZ.C5, 'sine', 0.26, 0.25, 0.20);
+      break;
+    case 6: // Bright major arpeggio (hottest number)
+      playNote(HZ.C5, 'sine', 0,    0.22, 0.30);
+      playNote(HZ.E5, 'sine', 0.10, 0.22, 0.27);
+      playNote(HZ.G5, 'sine', 0.20, 0.32, 0.24);
+      break;
+    case 7: // ROBBER — ominous tritone + deep rumble
+      playNote(HZ.G3,  'sawtooth', 0,    0.40, 0.22);
+      playNote(HZ.Gb4, 'sawtooth', 0,    0.40, 0.18); // tritone
+      playNote(HZ.D3,  'sawtooth', 0.18, 0.55, 0.20);
+      playNote(HZ.Ab3, 'sawtooth', 0.18, 0.55, 0.16);
+      playNote(HZ.C3,  'sine',     0.35, 0.80, 0.24); // deep drone
+      playNoise(0, 0.40, 180, 0.18);                   // low rumble
+      break;
+    case 8: // Bright arpegg — twin to 6, different key
+      playNote(HZ.D5,  'sine', 0,    0.22, 0.30);
+      playNote(HZ.Gb5, 'sine', 0.10, 0.22, 0.22);
+      playNote(HZ.A5,  'sine', 0.20, 0.32, 0.24);
+      break;
+    case 9: // Three-note ascending (mirror of 5)
+      playNote(HZ.A4, 'sine', 0,    0.18, 0.25);
+      playNote(HZ.C5, 'sine', 0.13, 0.18, 0.23);
+      playNote(HZ.D5, 'sine', 0.26, 0.25, 0.20);
+      break;
+    case 10: // Gentle two-note (mirror of 4)
+      playNote(HZ.C5, 'sine', 0,    0.25, 0.25);
+      playNote(HZ.E5, 'sine', 0.18, 0.28, 0.22);
+      break;
+    case 11: // Single sustained bell tone
+      playNote(HZ.G4, 'sine', 0, 0.55, 0.26);
+      playNote(HZ.D4, 'sine', 0, 0.55, 0.10); // quiet undertone
+      break;
+    case 12: // BOXCARS — triumphant fanfare!
+      playNote(HZ.C5, 'sine', 0,    0.15, 0.30);
+      playNote(HZ.E5, 'sine', 0.10, 0.15, 0.30);
+      playNote(HZ.G5, 'sine', 0.20, 0.15, 0.30);
+      playNote(HZ.C6, 'sine', 0.30, 0.50, 0.35);
+      playNote(HZ.E6, 'sine', 0.36, 0.45, 0.25);
+      playNote(HZ.G6, 'sine', 0.44, 0.55, 0.20);
+      playNote(HZ.E5, 'sine', 0.30, 0.60, 0.14); // harmony pad
+      break;
+  }
+  // Extra sparkle chime for doubles
+  if(isDbl){
+    playNote(HZ.E6, 'sine', 0.04, 0.14, 0.14);
+    playNote(HZ.G6, 'sine', 0.14, 0.14, 0.11);
+  }
+}
+
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  document.getElementById('sndBtn').textContent = soundEnabled ? '🔊' : '🔇';
+  // Warm up audio context on first unmute (browsers require user gesture)
+  if(soundEnabled) getACtx();
+}
+
+// ── Players ──────────────────────────────────────────────────────────────────
+const PCOLORS=['#ef4444','#3b82f6','#f97316','#cbd5e1','#22c55e','#b45309'];
+let players=[
+  {name:'Player 1',color:PCOLORS[0]},
+  {name:'Player 2',color:PCOLORS[1]},
+  {name:'Player 3',color:PCOLORS[2]},
+  {name:'Player 4',color:PCOLORS[3]}
+];
+let curPlayer=0, playerPanelOpen=false, draftCount=4;
+
+function renderTurnBar(){
+  const cur=players[curPlayer];
+  const nextIdx=(curPlayer+1)%players.length;
+  const nxt=players[nextIdx];
+
+  // Current player
+  const bar=document.getElementById('turnBar');
+  bar.style.setProperty('--tc', cur.color);
+  const av=document.getElementById('turnAvatar');
+  av.style.background=cur.color;
+  av.style.boxShadow=`0 0 20px ${cur.color}99`;
+  const nm=document.getElementById('turnName');
+  nm.textContent=cur.name;
+  nm.style.color=cur.color;
+
+  // Next player — hide arrow + section when only 1 player
+  const sep=bar.querySelector('.turn-sep');
+  const nextSec=document.getElementById('turnNextSec');
+  if(players.length>1){
+    sep.style.display='';
+    nextSec.style.display='';
+    document.getElementById('turnNextAv').style.background=nxt.color;
+    document.getElementById('turnNextName').textContent=nxt.name;
+  } else {
+    sep.style.display='none';
+    nextSec.style.display='none';
+  }
+
+  // Slide-in animation
+  bar.classList.remove('anim'); void bar.offsetWidth; bar.classList.add('anim');
+}
+
+function advancePlayer(){
+  curPlayer=(curPlayer+1)%players.length;
+  renderTurnBar();
+}
+
+function togglePlayerPanel(){
+  playerPanelOpen=!playerPanelOpen;
+  document.getElementById('pbody').classList.toggle('open',playerPanelOpen);
+  document.getElementById('ptoggle').classList.toggle('open',playerPanelOpen);
+}
+
+function buildPlayerInputs(){
+  const container=document.getElementById('pinputs');
+  container.innerHTML='';
+  for(let i=0;i<draftCount;i++){
+    const p=players[i]||{name:`Player ${i+1}`,color:PCOLORS[i%PCOLORS.length]};
+    let ci=PCOLORS.indexOf(p.color); if(ci<0) ci=i%PCOLORS.length;
+    const row=document.createElement('div'); row.className='pinput-row';
+    const sw=document.createElement('div'); sw.className='pcolor-swatch';
+    sw.dataset.ci=ci; sw.style.background=PCOLORS[ci];
+    sw.title='Tap to change colour';
+    sw.onclick=function(){
+      const next=(parseInt(this.dataset.ci)+1)%PCOLORS.length;
+      this.dataset.ci=next; this.style.background=PCOLORS[next];
+    };
+    const inp=document.createElement('input'); inp.className='pname-input';
+    inp.type='text'; inp.value=p.name; inp.placeholder=`Player ${i+1}`;
+    row.appendChild(sw); row.appendChild(inp);
+    container.appendChild(row);
+  }
+}
+
+function adjustCount(delta){
+  draftCount=Math.max(2,Math.min(6,draftCount+delta));
+  document.getElementById('pcountVal').textContent=draftCount;
+  buildPlayerInputs();
+}
+
+function applyPlayers(){
+  const rows=document.querySelectorAll('#pinputs .pinput-row');
+  players=Array.from(rows).map((row,i)=>{
+    const sw=row.querySelector('.pcolor-swatch');
+    const inp=row.querySelector('.pname-input');
+    return {name:inp.value.trim()||`Player ${i+1}`,color:PCOLORS[parseInt(sw.dataset.ci)]};
+  });
+  curPlayer=0; draftCount=players.length;
+  document.getElementById('ptoggleLbl').textContent=`👥 Players (${players.length})`;
+  renderTurnBar();
+  saveState();
+  togglePlayerPanel();
+}
+
+// ── Persistence ──────────────────────────────────────────────────────────────
+const SAVE_KEY='catanDice_v1';
+
+function saveState(){
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({
+      rc,sum,hi,lo:lo===Infinity?null:lo,
+      cntRob,cntDbl,cntBc,since7,totals,hist,
+      players,curPlayer
+    }));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    rc=s.rc??0; sum=s.sum??0; hi=s.hi??0;
+    lo=s.lo!=null?s.lo:Infinity;
+    cntRob=s.cntRob??0; cntDbl=s.cntDbl??0; cntBc=s.cntBc??0; since7=s.since7??0;
+    if(s.totals) for(const k in s.totals) totals[k]=s.totals[k];
+    if(s.hist?.length) hist=s.hist.slice(0,10);
+    if(s.players?.length){players=s.players; draftCount=players.length;}
+    if(s.curPlayer!=null) curPlayer=s.curPlayer%players.length;
+  }catch(e){}
+}
+
+loadState();
+buildPlayerInputs();
+renderTurnBar();
+if(rc){ updateHeader(); renderHist(); renderChart(); }
+
+// ── iOS audio unlock ─────────────────────────────────────────────────────────
+// iOS/iPadOS blocks AudioContext until a user gesture — warm it up on first touch
+document.addEventListener('touchstart', function unl(){
+  if(soundEnabled) getACtx();
+  document.removeEventListener('touchstart', unl);
+}, {passive: true});
 
 // ── Mobile shake ─────────────────────────────────────────────────────────────
 let lastShake=0;
