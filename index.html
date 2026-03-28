@@ -314,6 +314,14 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
   90%{transform:translate(-2px,2px)}}
 .arena.shk{animation:shake .5s ease-out}
 
+/* ── Reset button ── */
+.reset-btn{padding:10px 28px;font-size:.75rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  background:transparent;border:1px solid var(--border);border-radius:50px;
+  cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.reset-btn:hover{color:#c0392b;border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.08)}
+.reset-btn:active{transform:scale(.97)}
+
 .hint{font-size:.6rem;color:rgba(255,255,255,.15);letter-spacing:.14em;text-align:center}
 
 /* ── Sound toggle ── */
@@ -628,6 +636,7 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
     </div>
   </div>
 
+  <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
   <div class="hint">SPACE · ENTER · TAP DICE to roll &nbsp;|&nbsp; Shake on mobile</div>
 </div>
 
@@ -996,6 +1005,41 @@ function toggleStats(){
   statsOpen=!statsOpen;
   document.getElementById('sbody').classList.toggle('open',statsOpen);
   document.getElementById('stoggle').classList.toggle('open',statsOpen);
+}
+
+// ── Reset game ───────────────────────────────────────────────────────────────
+function resetGame(){
+  if(!confirm('Start a new game? This will reset all stats, history, and timers.')) return;
+  // Reset stats
+  rc=0; sum=0; hi=0; lo=Infinity;
+  cntRob=0; cntDbl=0; cntBc=0; since7=0;
+  for(let i=2;i<=12;i++) totals[i]=0;
+  hist=[];
+  // Reset timers
+  gameStartTime=null; turnStartTime=null;
+  if(timerRAF){cancelAnimationFrame(timerRAF); timerRAF=null;}
+  document.getElementById('gameTimerVal').textContent='0:00';
+  document.getElementById('turnTimerVal').textContent='0:00';
+  document.getElementById('turnTimerVal').className='turn-timer-val';
+  // Reset player turn
+  curPlayer=0;
+  initPlayerTimes();
+  // Reset UI
+  document.getElementById('rtotal').className='rtotal';
+  document.getElementById('rtotal').textContent='—';
+  document.getElementById('rbreak').className='rbreak';
+  document.getElementById('rbreak').innerHTML='&nbsp;';
+  document.getElementById('rbadge').className='rbadge';
+  document.getElementById('sc1').className='die-scene';
+  document.getElementById('sc2').className='die-scene';
+  buildDie('d1',1); buildDie('d2',1);
+  buildPipStrip();
+  updateHeader();
+  renderHist();
+  renderChart();
+  renderTurnBar();
+  renderPlayerTimes();
+  saveState();
 }
 
 // ── Keyboard ─────────────────────────────────────────────────────────────────
