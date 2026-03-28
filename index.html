@@ -325,15 +325,16 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
 /* ── First Roll overlay ── */
 #firstRoll{position:fixed;inset:0;z-index:450;
   background:rgba(0,0,0,.88);backdrop-filter:blur(6px);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
-  opacity:0;pointer-events:none;transition:opacity .35s ease}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  opacity:0;pointer-events:none;transition:opacity .35s ease;
+  overflow-y:auto;padding:40px 16px}
 #firstRoll.show{opacity:1;pointer-events:all}
 .fr-title{font-size:1.4rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
   background:linear-gradient(135deg,#d4a017,#f5e6c8);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .fr-sub{font-size:.82rem;color:var(--muted);letter-spacing:.08em;text-align:center}
-.fr-players{display:flex;flex-direction:column;gap:10px;width:85%;max-width:340px;margin:8px 0}
-.fr-player{display:flex;align-items:center;gap:12px;padding:10px 16px;
+.fr-players{display:flex;flex-direction:column;gap:8px;width:85%;max-width:340px;margin:4px 0}
+.fr-player{display:flex;align-items:center;gap:12px;padding:8px 14px;
   background:rgba(245,230,200,.05);border:1px solid rgba(245,230,200,.1);
   border-radius:14px;transition:all .3s}
 .fr-player.active{background:rgba(245,230,200,.1);border-color:rgba(245,230,200,.25);
@@ -361,7 +362,7 @@ header{width:100%;max-width:580px;display:flex;flex-direction:column;align-items
 .fr-roll-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(192,57,43,.6)}
 .fr-roll-btn:active{transform:translateY(1px)}
 .fr-roll-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.fr-result{font-size:1.8rem;font-weight:900;min-height:44px;
+.fr-result{font-size:1.4rem;font-weight:900;min-height:0;
   color:var(--text);text-align:center}
 .fr-winner-msg{font-size:1.1rem;font-weight:800;letter-spacing:.1em;
   color:#d4a017;text-align:center;margin-top:4px}
