@@ -1463,7 +1463,36 @@ if(!playerTimes.length) initPlayerTimes();
 buildPlayerInputs();
 renderTurnBar();
 renderPlayerTimes();
-if(rc){ updateHeader(); renderHist(); renderChart(); }
+if(rc){
+  updateHeader(); renderHist(); renderChart();
+  if(hist.length){
+    const last=hist[0];
+    buildDie('d1',last.v1); buildDie('d2',last.v2);
+    // Restore result display
+    const tot=document.getElementById('rtotal');
+    const brk=document.getElementById('rbreak');
+    const bdg=document.getElementById('rbadge');
+    const s1=document.getElementById('sc1'), s2=document.getElementById('sc2');
+    const isRob=last.total===7, isSn=last.total===2, isBc=last.total===12;
+    const isDbl=last.v1===last.v2&&!isSn&&!isBc;
+    tot.textContent=last.total;
+    if(isRob)     tot.className='rtotal trob vis';
+    else if(isSn) tot.className='rtotal tr vis';
+    else if(isBc) tot.className='rtotal trb vis';
+    else          tot.className='rtotal vis';
+    brk.textContent=`${last.v1}  +  ${last.v2}`;
+    brk.classList.add('vis');
+    if(isRob)      {bdg.textContent='🏴‍☠️ Robber — move it!'; bdg.className='rbadge rob vis';}
+    else if(isSn)  {bdg.textContent='🐍 Snake Eyes';          bdg.className='rbadge sn vis';}
+    else if(isBc)  {bdg.textContent='🚂 Boxcars!';            bdg.className='rbadge bc vis';}
+    else if(isDbl) {bdg.textContent=`🎯 Doubles — ${last.v1}s`; bdg.className='rbadge db vis';}
+    if(isRob){s1.classList.add('grob');s2.classList.add('grob');}
+    else if(isSn){s1.classList.add('gr');s2.classList.add('gr');}
+    else if(isBc){s1.classList.add('grb');s2.classList.add('grb');}
+    else if(isDbl){s1.classList.add('gv');s2.classList.add('gv');}
+    buildPipStrip(last.total);
+  }
+}
 
 // ── iOS audio unlock ─────────────────────────────────────────────────────────
 // iOS/iPadOS blocks AudioContext until a user gesture — warm it up on first touch
